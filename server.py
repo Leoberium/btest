@@ -11,7 +11,7 @@ def count(i=1):
 
 def calculate(task_id: str, x: float):
     time.sleep(10)
-    results[task_id] = float(2 * x)
+    results[task_id] = 2.0 * x
 
 
 gen_task_id = count()
@@ -27,33 +27,31 @@ def initial_message():
 
 @app.route("/calculate")
 def accept_task():
-    # get input
-    x = request.args.get("X")
-
-    # check input
     try:
-        x = float(x)
-    except ValueError:
+        x = float(request.args.get("X"))  # get input
+    except (ValueError, TypeError) as e:
+        print(e)
         return "not float", 400
 
-    # create task
-    task_id = next(gen_task_id)
+    task_id = next(gen_task_id)  # create task
     results[task_id] = None
 
-    # launch task
     t = threading.Thread(target=calculate, args=(task_id, x))
-    t.start()
+    t.start()  # launch task in dedicated thread
 
     return str(task_id), 201
 
 
 @app.route("/result")
 def return_result():
-    # get task id
-    task_id = int(request.args.get("task_id"))
+    try:
+        task_id = int(request.args.get("task_id"))  # get task id
+    except (ValueError, TypeError) as e:
+        print(e)
+        return "wrong format of task id", 400
 
     if task_id not in results:  # no such task found
-        return "no such task created", 400
+        return "no task with such id", 400
 
     result = results[task_id]
     if result is None:  # not finished
